@@ -354,9 +354,103 @@
     white-space: nowrap;
   }
   .hlink:hover { color: #8a6508; }
+
+  /* SLIDE / PDF-PAGE VIEW TOGGLE */
+  .mode-toggle {
+    position: fixed;
+    bottom: 22px;
+    right: 18px;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: rgba(255,255,255,0.95);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 7px 14px 7px 7px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+    font-family: Georgia, serif;
+    direction: ltr;
+  }
+  .mode-toggle span {
+    font-size: 0.72rem;
+    color: var(--green);
+    font-weight: bold;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+  }
+  .switch { position: relative; width: 38px; height: 21px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch .slider {
+    position: absolute; inset: 0;
+    background: #ccc;
+    border-radius: 22px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .switch .slider::before {
+    content: '';
+    position: absolute;
+    height: 15px; width: 15px;
+    left: 3px; bottom: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  }
+  .switch input:checked + .slider { background: var(--green); }
+  .switch input:checked + .slider::before { transform: translateX(17px); }
+
+  @keyframes slideCardIn {
+    from { opacity: 0; transform: translateY(14px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  body.slide-mode { background: #4a4a44; }
+  body.slide-mode main {
+    max-width: none;
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 30px 16px 90px;
+  }
+  body.slide-mode .hadith-entry.active {
+    background: var(--card);
+    width: 100%;
+    max-width: 720px;
+    height: calc(100vh - 210px);
+    min-height: 320px;
+    overflow-y: auto;
+    border-radius: 5px;
+    box-shadow: 0 14px 44px rgba(0,0,0,0.5);
+    animation: slideCardIn 0.3s ease;
+  }
+  body.slide-mode .sub-slide-in { animation: slideCardIn 0.22s ease; }
+  body.slide-mode .kitab-text { font-size: 1.85rem; }
+  body.slide-mode .bab-text { font-size: 1.3rem; }
+  body.slide-mode .matn-text { font-size: 1.55rem; line-height: 2.3; }
+  body.slide-mode .trans-text,
+  body.slide-mode .xref-text { font-size: 1.02rem; }
+  body.slide-mode .notes-list li,
+  body.slide-mode .meanings-list li { font-size: 1.05rem; }
+
+  @media (max-width: 640px) {
+    body.slide-mode .hadith-entry.active { height: calc(100vh - 230px); }
+    .mode-toggle span { display: none; }
+    .mode-toggle { padding: 8px; }
+  }
 </style>
 </head>
 <body>
+
+<div class="mode-toggle" title="Toggle slide view (each hadith broken into scrollable sections you page through one by one)">
+  <span>Slide View</span>
+  <label class="switch">
+    <input type="checkbox" id="slide-toggle">
+    <span class="slider"></span>
+  </label>
+</div>
 
 <header>
   <div>
@@ -6819,20 +6913,77 @@ I said to them: 'You have shown me much tonight; now tell me what I saw.' They s
   const fill = document.getElementById('progress-fill');
   const knob = document.getElementById('progress-knob');
 
+  // Slide View: each hadith's kitab/matn header, translation, notes, word-meanings
+  // and cross-ref become separate sections you page through one by one; a section
+  // taller than the slide simply scrolls internally (kitab-bab + matn-block are
+  // paired as the opening section, everything else after is its own section).
+  function getGroups(entry) {
+    const children = Array.from(entry.children);
+    if (children.length < 2) return [children];
+    const groups = [[children[0], children[1]]];
+    for (let i = 2; i < children.length; i++) groups.push([children[i]]);
+    return groups;
+  }
+  const entryGroups = entries.map(getGroups);
+
+  let slideMode = false;
+  let slideIdx = 0;
+
+  function showGroups() {
+    const groups = entryGroups[current] || [];
+    groups.forEach((group, gi) => {
+      group.forEach(el => {
+        if (!slideMode) { el.style.display = ''; el.classList.remove('sub-slide-in'); return; }
+        if (gi === slideIdx) {
+          el.style.display = '';
+          el.classList.remove('sub-slide-in'); void el.offsetWidth; el.classList.add('sub-slide-in');
+        } else {
+          el.style.display = 'none';
+          el.classList.remove('sub-slide-in');
+        }
+      });
+    });
+  }
+
   function render() {
     entries.forEach((e, i) => e.classList.toggle('active', i === current));
-    document.getElementById('btn-prev').disabled = current === 0;
-    document.getElementById('btn-next').disabled = current === entries.length - 1;
+    showGroups();
+    if (entries[current]) entries[current].scrollTop = 0;
+    const groups = entryGroups[current] || [];
+    const atFirst = current === 0 && (!slideMode || slideIdx === 0);
+    const atLast = current === entries.length - 1 && (!slideMode || slideIdx === groups.length - 1);
+    document.getElementById('btn-prev').disabled = atFirst;
+    document.getElementById('btn-next').disabled = atLast;
     const num = entries[current] ? entries[current].dataset.num : '';
     document.getElementById('nav-hadith-num').textContent = num ? 'حديث ' + num : '';
-    document.getElementById('nav-counter-text').textContent = entries.length ? (current + 1) + ' / ' + entries.length : '';
+    let counterText = entries.length ? (current + 1) + ' / ' + entries.length : '';
+    if (slideMode && groups.length) counterText += '  ·  section ' + (slideIdx + 1) + '/' + groups.length;
+    document.getElementById('nav-counter-text').textContent = counterText;
     const pct = entries.length > 1 ? (current / (entries.length - 1)) * 100 : 0;
     fill.style.width = pct + '%';
     knob.style.left = pct + '%';
   }
 
   function navigate(dir) {
+    if (slideMode) {
+      const groups = entryGroups[current] || [];
+      const next = slideIdx + dir;
+      if (next < 0) {
+        if (current === 0) return;
+        current -= 1;
+        slideIdx = entryGroups[current].length - 1;
+      } else if (next >= groups.length) {
+        if (current === entries.length - 1) return;
+        current += 1;
+        slideIdx = 0;
+      } else {
+        slideIdx = next;
+      }
+      render();
+      return;
+    }
     current = Math.max(0, Math.min(entries.length - 1, current + dir));
+    slideIdx = 0;
     render();
     window.scrollTo(0, 0);
   }
@@ -6847,9 +6998,23 @@ I said to them: 'You have shown me much tonight; now tell me what I saw.' They s
       if (n) { n.textContent = 'حديث ' + num + ' — not added yet'; setTimeout(() => render(), 1500); }
       return;
     }
-    current = idx; render(); window.scrollTo(0, 0);
+    current = idx; slideIdx = 0; render(); window.scrollTo(0, 0);
   }
   window.gotoHadith = gotoHadith;
+
+  // Slide View toggle — persists via localStorage
+  const slideToggle = document.getElementById('slide-toggle');
+  function applySlideMode(on) {
+    slideMode = on;
+    slideIdx = 0;
+    document.body.classList.toggle('slide-mode', on);
+    slideToggle.checked = on;
+    render();
+  }
+  slideToggle.addEventListener('change', () => {
+    applySlideMode(slideToggle.checked);
+    localStorage.setItem('mishkatSlideMode', slideToggle.checked ? '1' : '0');
+  });
 
   // Scrubbing: click or drag the progress bar to jump to any hadith
   let dragging = false;
@@ -6858,7 +7023,7 @@ I said to them: 'You have shown me much tonight; now tell me what I saw.' They s
     const clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
     const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     const idx = Math.round(ratio * (entries.length - 1));
-    if (idx !== current) { current = idx; render(); }
+    if (idx !== current) { current = idx; slideIdx = 0; render(); }
   }
   track.addEventListener('mousedown', e => { dragging = true; seek(e); e.preventDefault(); });
   window.addEventListener('mousemove', e => { if (dragging) seek(e); });
@@ -6867,7 +7032,7 @@ I said to them: 'You have shown me much tonight; now tell me what I saw.' They s
   window.addEventListener('touchmove', e => { if (dragging) seek(e); }, { passive: true });
   window.addEventListener('touchend', () => { dragging = false; });
 
-  if (entries.length) render();
+  applySlideMode(localStorage.getItem('mishkatSlideMode') === '1');
 </script>
 </body>
 </html>
