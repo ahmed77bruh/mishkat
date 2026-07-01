@@ -7,6 +7,8 @@
 <style>
   :root {
     --green: #1a6b3c;
+    --navy: #1B2A4A;
+    --navy-dark: #0F1B33;
     --gold: #c9a84c;
     --cream: #fdf6e3;
     --dark: #1c1c1c;
@@ -26,7 +28,7 @@
   }
 
   header {
-    background: var(--green);
+    background: var(--navy);
     color: #fff;
     padding: 18px 32px;
     display: flex;
@@ -38,7 +40,7 @@
 
   /* NAV */
   .nav-bar {
-    background: #145530;
+    background: var(--navy-dark);
     padding: 10px 32px;
     display: flex;
     justify-content: space-between;
@@ -76,7 +78,7 @@
   .progress-track {
     position: relative;
     height: 22px;
-    background: #0d3d22;
+    background: var(--navy-dark);
     border-bottom: 4px solid var(--gold);
     cursor: pointer;
     direction: ltr;
@@ -120,7 +122,7 @@
 
   /* KITAB / BAB */
   .kitab-bab {
-    background: var(--green);
+    background: var(--navy);
     color: #fff;
     border-radius: 8px 8px 0 0;
     padding: 14px 22px;
@@ -145,7 +147,7 @@
   .hadith-badge {
     display: inline-block;
     background: var(--gold);
-    color: #000;
+    color: var(--navy-dark);
     font-size: 0.8rem;
     font-family: Georgia, serif;
     font-weight: bold;
@@ -337,7 +339,7 @@
   }
 
   footer {
-    background: #145530;
+    background: var(--navy-dark);
     color: #adc9bb;
     text-align: center;
     padding: 12px;
@@ -398,7 +400,7 @@
     transition: transform 0.2s;
     box-shadow: 0 1px 3px rgba(0,0,0,0.35);
   }
-  .switch input:checked + .slider { background: var(--green); }
+  .switch input:checked + .slider { background: var(--navy); }
   .switch input:checked + .slider::before { transform: translateX(17px); }
 
   /* Slide View: every hadith is stacked as its own page, one after another —
