@@ -3,32 +3,125 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#fdf6e3" id="theme-color-meta">
 <title>مشكاة المصابيح — مذاكرة</title>
 <style>
   :root {
-    --green: #1a6b3c;
-    --navy: #1B2A4A;
-    --navy-dark: #0F1B33;
-    --gold: #c9a84c;
-    --cream: #fdf6e3;
-    --dark: #1c1c1c;
-    --card: #ffffff;
+    /* backgrounds */
+    --page-bg: #fdf6e3;
+    --card-bg: #ffffff;
     --border: #ddd;
+    --header-bg: #1B2A4A;
+    --header-bg-dark: #0F1B33;
+    --meanings-bg: #f7f3ea;
+    --source-tag-bg: #f0ece0;
+    --xref-bg: #f4f0e8;
+    --toggle-bg: rgba(255,255,255,0.95);
+    --switch-track: #ccc;
+    --slide-surround-bg: #4a4a44;
+    --slide-card-border: transparent;
+    --slide-card-shadow: rgba(0,0,0,0.45);
+    --toggle-shadow: rgba(0,0,0,0.25);
+
+    /* gold family */
+    --gold: #c9a84c;
+    --gold-gradient-start: #b8973f;
+    --gold-gradient-end: #ecd680;
+    --gold-border-soft: #c9a84c88;
+    --gold-border-softer: #c9a84c55;
+    --knob-border: #8a6d1f;
+    --meanings-header-color: #a07830;
+    --hlink-color: #b8860b;
+    --hlink-hover: #8a6508;
+    --gold-btn-text: #000;
+    --gold-badge-text: #0F1B33;
+
+    /* accent text (word-meanings term / source-tag / xref-label / mode-toggle label) */
+    --accent-text: #1a6b3c;
+    --switch-checked-bg: #1B2A4A;
+
+    /* body text */
+    --text-main: #1c1c1c;
+    --text-matn: #111;
+    --text-takhrij: #777;
+    --text-trans-header: #888;
+    --text-trans: #333;
+    --text-notes-header: #888;
+    --text-defn: #444;
+    --text-xref: #555;
+    --text-nav-counter: #cce8d8;
+    --text-footer: #adc9bb;
+
+    /* dividers */
+    --notes-divider: #e0d9c8;
+    --meanings-divider: #ddd4bb;
+    --btn-disabled-bg: #555;
+    --btn-disabled-text: #999;
+  }
+
+  body.dark-mode {
+    --page-bg: #15140f;
+    --card-bg: #1f1e18;
+    --border: #3a3830;
+    --header-bg: #3B2A20;
+    --header-bg-dark: #2A1D15;
+    --meanings-bg: #1a1912;
+    --source-tag-bg: #23221a;
+    --xref-bg: #1c1b15;
+    --toggle-bg: rgba(30,28,22,0.95);
+    --switch-track: #444;
+    --slide-surround-bg: #0c0b08;
+    --slide-card-border: var(--border);
+    --slide-card-shadow: rgba(0,0,0,0.6);
+    --toggle-shadow: rgba(0,0,0,0.5);
+
+    --gold: #B8935F;
+    --gold-gradient-start: #8f6f42;
+    --gold-gradient-end: #D4AF7A;
+    --gold-border-soft: rgba(184, 147, 95, 0.4);
+    --gold-border-softer: rgba(184, 147, 95, 0.4);
+    --knob-border: #7a5c38;
+    --meanings-header-color: var(--gold);
+    --hlink-color: var(--gold);
+    --hlink-hover: #D4AF7A;
+    --gold-btn-text: #2A1D15;
+    --gold-badge-text: #2A1D15;
+
+    --accent-text: #B8935F;
+    --switch-checked-bg: #B8935F;
+
+    --text-main: #ffffff;
+    --text-matn: #ffffff;
+    --text-takhrij: #ffffff;
+    --text-trans-header: #ffffff;
+    --text-trans: #ffffff;
+    --text-notes-header: #ffffff;
+    --text-defn: #ffffff;
+    --text-xref: #ffffff;
+    --text-nav-counter: #ffffff;
+    --text-footer: #ffffff;
+
+    --notes-divider: #3a382e;
+    --meanings-divider: #332f22;
+    --btn-disabled-bg: #333;
+    --btn-disabled-text: #777;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease; }
 
   body {
     font-family: 'Amiri', 'Traditional Arabic', 'Times New Roman', serif;
-    background: var(--cream);
-    color: var(--dark);
+    background: var(--page-bg);
+    color: var(--text-main);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
   }
 
   header {
-    background: var(--navy);
+    position: relative;
+    background: var(--header-bg);
     color: #fff;
     padding: 18px 32px;
     display: flex;
@@ -38,9 +131,32 @@
   header h1 { font-size: 1.6rem; }
   header .subtitle { font-size: 0.85rem; opacity: 0.75; direction: ltr; font-family: Georgia, serif; }
 
+  /* DARK MODE TOGGLE (sun/moon) */
+  .theme-toggle {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    line-height: 1;
+    transition: background-color 0.25s ease, transform 0.15s ease;
+  }
+  .theme-toggle:hover { background: rgba(255,255,255,0.28); transform: scale(1.07); }
+  .theme-toggle .icon-moon { display: none; }
+  body.dark-mode .theme-toggle .icon-sun { display: none; }
+  body.dark-mode .theme-toggle .icon-moon { display: inline; }
+
   /* NAV */
   .nav-bar {
-    background: var(--navy-dark);
+    background: var(--header-bg-dark);
     padding: 10px 32px;
     display: flex;
     justify-content: space-between;
@@ -49,7 +165,7 @@
   }
   .nav-bar button {
     background: var(--gold);
-    color: #000;
+    color: var(--gold-btn-text);
     border: none;
     padding: 8px 22px;
     border-radius: 6px;
@@ -57,12 +173,12 @@
     font-size: 1rem;
     font-family: Georgia, serif;
     font-weight: bold;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, background-color 0.25s ease, color 0.25s ease;
   }
   .nav-bar button:hover { opacity: 0.85; }
-  .nav-bar button:disabled { background: #555; color: #999; cursor: default; }
+  .nav-bar button:disabled { background: var(--btn-disabled-bg); color: var(--btn-disabled-text); cursor: default; }
   .nav-counter {
-    color: #cce8d8;
+    color: var(--text-nav-counter);
     font-family: Georgia, serif;
     font-size: 0.9rem;
     text-align: center;
@@ -78,7 +194,7 @@
   .progress-track {
     position: relative;
     height: 22px;
-    background: var(--navy-dark);
+    background: var(--header-bg-dark);
     border-bottom: 4px solid var(--gold);
     cursor: pointer;
     direction: ltr;
@@ -90,8 +206,8 @@
     position: absolute;
     top: 0; left: 0; bottom: 0;
     width: 0%;
-    background: linear-gradient(90deg, #b8973f, var(--gold) 60%, #ecd680);
-    transition: width 0.12s ease;
+    background: linear-gradient(90deg, var(--gold-gradient-start), var(--gold) 60%, var(--gold-gradient-end));
+    transition: width 0.12s ease, background-color 0.25s ease;
   }
   .progress-knob {
     position: absolute;
@@ -101,10 +217,10 @@
     height: 34px;
     transform: translate(-50%, -50%);
     background: #fff7e2;
-    border: 2px solid #8a6d1f;
+    border: 2px solid var(--knob-border);
     border-radius: 5px;
     box-shadow: 0 0 6px rgba(0,0,0,0.45);
-    transition: left 0.12s ease;
+    transition: left 0.12s ease, border-color 0.25s ease;
   }
   .progress-track:hover .progress-knob { background: #fff; }
 
@@ -122,14 +238,14 @@
 
   /* KITAB / BAB */
   .kitab-bab {
-    background: var(--navy);
+    background: var(--header-bg);
     color: #fff;
     border-radius: 8px 8px 0 0;
     padding: 14px 22px;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    border-bottom: 3px solid var(--gold);
+    border-bottom: 3px solid var(--gold-border-soft);
   }
   .kitab-label {
     font-size: 0.7rem;
@@ -147,7 +263,7 @@
   .hadith-badge {
     display: inline-block;
     background: var(--gold);
-    color: var(--navy-dark);
+    color: var(--gold-badge-text);
     font-size: 0.8rem;
     font-family: Georgia, serif;
     font-weight: bold;
@@ -159,22 +275,22 @@
 
   /* MATN */
   .matn-block {
-    background: var(--card);
+    background: var(--card-bg);
     border: 1px solid var(--border);
     border-top: none;
     padding: 24px 22px;
-    border-bottom: 2px solid var(--gold);
+    border-bottom: 2px solid var(--gold-border-soft);
   }
   .matn-text {
     font-size: 1.35rem;
     line-height: 2.2;
-    color: #111;
+    color: var(--text-matn);
     text-align: right;
   }
   .takhrij {
     margin-top: 12px;
     font-size: 0.82rem;
-    color: #777;
+    color: var(--text-takhrij);
     direction: ltr;
     text-align: left;
     font-family: Georgia, serif;
@@ -183,16 +299,16 @@
 
   /* TRANSLATION */
   .trans-block {
-    background: var(--card);
+    background: var(--card-bg);
     border: 1px solid var(--border);
-    border-top: 1px dashed #c9a84c88;
+    border-top: 1px dashed var(--gold-border-soft);
     padding: 14px 22px;
   }
   .trans-header {
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: #888;
+    color: var(--text-trans-header);
     margin-bottom: 8px;
     direction: ltr;
     text-align: left;
@@ -201,7 +317,7 @@
   .trans-text {
     font-size: 0.95rem;
     line-height: 1.7;
-    color: #333;
+    color: var(--text-trans);
     direction: ltr;
     text-align: left;
     font-family: Georgia, serif;
@@ -210,7 +326,7 @@
 
   /* NOTES */
   .notes-block {
-    background: var(--card);
+    background: var(--card-bg);
     border: 1px solid var(--border);
     border-top: none;
     padding: 14px 22px;
@@ -219,7 +335,7 @@
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: #888;
+    color: var(--text-notes-header);
     margin-bottom: 8px;
     direction: ltr;
     text-align: left;
@@ -233,7 +349,7 @@
     font-size: 0.97rem;
     line-height: 1.55;
     padding: 5px 0 5px 0;
-    border-bottom: 1px dotted #e0d9c8;
+    border-bottom: 1px dotted var(--notes-divider);
     direction: ltr;
     text-align: left;
     display: flex;
@@ -255,15 +371,15 @@
 
   /* WORD MEANINGS */
   .meanings-block {
-    background: #f7f3ea;
-    border-top: 1px dashed #c9a84c88;
+    background: var(--meanings-bg);
+    border-top: 1px dashed var(--gold-border-soft);
     padding: 10px 22px 12px;
   }
   .meanings-header {
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: #a07830;
+    color: var(--meanings-header-color);
     margin-bottom: 6px;
     direction: ltr;
     text-align: left;
@@ -277,7 +393,7 @@
     font-size: 0.93rem;
     line-height: 1.55;
     padding: 4px 0;
-    border-bottom: 1px dotted #ddd4bb;
+    border-bottom: 1px dotted var(--meanings-divider);
     direction: ltr;
     text-align: left;
     display: flex;
@@ -287,19 +403,19 @@
   .meanings-list li:last-child { border: none; }
   .meanings-list li .word {
     font-weight: bold;
-    color: var(--green);
+    color: var(--accent-text);
     direction: rtl;
     font-size: 1.05rem;
     white-space: nowrap;
   }
-  .meanings-list li .defn { color: #444; }
+  .meanings-list li .defn { color: var(--text-defn); }
 
   /* SOURCE TAG */
   .source-tag {
     display: inline-block;
-    background: #f0ece0;
-    border: 1px solid #c9a84c55;
-    color: var(--green);
+    background: var(--source-tag-bg);
+    border: 1px solid var(--gold-border-softer);
+    color: var(--accent-text);
     font-size: 0.78rem;
     padding: 1px 8px;
     border-radius: 10px;
@@ -311,7 +427,7 @@
 
   /* CROSS REF */
   .xref-block {
-    background: #f4f0e8;
+    background: var(--xref-bg);
     border: 1px solid var(--border);
     border-top: none;
     border-radius: 0 0 8px 8px;
@@ -321,7 +437,7 @@
     gap: 10px;
   }
   .xref-label {
-    color: var(--green);
+    color: var(--accent-text);
     font-weight: bold;
     font-size: 0.78rem;
     font-family: Georgia, serif;
@@ -331,7 +447,7 @@
   }
   .xref-text {
     font-size: 0.88rem;
-    color: #555;
+    color: var(--text-xref);
     line-height: 1.6;
     font-family: Georgia, serif;
     direction: ltr;
@@ -339,8 +455,8 @@
   }
 
   footer {
-    background: var(--navy-dark);
-    color: #adc9bb;
+    background: var(--header-bg-dark);
+    color: var(--text-footer);
     text-align: center;
     padding: 12px;
     font-size: 0.78rem;
@@ -348,14 +464,14 @@
   }
   /* inline clickable cross-reference to another hadith entry */
   .hlink {
-    color: #b8860b;
+    color: var(--hlink-color);
     cursor: pointer;
     text-decoration: underline;
     text-underline-offset: 2px;
     font-weight: 600;
     white-space: nowrap;
   }
-  .hlink:hover { color: #8a6508; }
+  .hlink:hover { color: var(--hlink-hover); }
 
   /* SLIDE / PDF-PAGE VIEW TOGGLE */
   .mode-toggle {
@@ -366,17 +482,17 @@
     display: flex;
     align-items: center;
     gap: 9px;
-    background: rgba(255,255,255,0.95);
+    background: var(--toggle-bg);
     border: 1px solid var(--border);
     border-radius: 22px;
     padding: 7px 14px 7px 7px;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+    box-shadow: 0 3px 12px var(--toggle-shadow);
     font-family: Georgia, serif;
     direction: ltr;
   }
   .mode-toggle span {
     font-size: 0.72rem;
-    color: var(--green);
+    color: var(--accent-text);
     font-weight: bold;
     letter-spacing: 0.4px;
     white-space: nowrap;
@@ -385,7 +501,7 @@
   .switch input { opacity: 0; width: 0; height: 0; }
   .switch .slider {
     position: absolute; inset: 0;
-    background: #ccc;
+    background: var(--switch-track);
     border-radius: 22px;
     cursor: pointer;
     transition: background 0.2s;
@@ -400,12 +516,12 @@
     transition: transform 0.2s;
     box-shadow: 0 1px 3px rgba(0,0,0,0.35);
   }
-  .switch input:checked + .slider { background: var(--navy); }
+  .switch input:checked + .slider { background: var(--switch-checked-bg); }
   .switch input:checked + .slider::before { transform: translateX(17px); }
 
   /* Slide View: every hadith is stacked as its own page, one after another —
      no buttons, just scroll (or drag the scrubber) through all of them. */
-  body.slide-mode { background: #4a4a44; }
+  body.slide-mode { background: var(--slide-surround-bg); }
   body.slide-mode .nav-bar { display: none; }
   body.slide-mode .progress-track { position: sticky; top: 0; z-index: 55; }
   body.slide-mode main {
@@ -416,12 +532,13 @@
   }
   body.slide-mode .hadith-entry {
     display: block !important;
-    background: var(--card);
+    background: var(--card-bg);
     width: 100%;
     max-width: 720px;
     margin: 0 auto 32px;
     border-radius: 5px;
-    box-shadow: 0 10px 34px rgba(0,0,0,0.45);
+    border: 1px solid var(--slide-card-border);
+    box-shadow: 0 10px 34px var(--slide-card-shadow);
   }
   body.slide-mode .kitab-text { font-size: 1.85rem; }
   body.slide-mode .bab-text { font-size: 1.3rem; }
@@ -452,6 +569,10 @@
     <h1>مشكاة المصابيح</h1>
     <div class="subtitle">Mishkat 2 — Study Notes</div>
   </div>
+  <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+    <span class="icon-sun">☀️</span>
+    <span class="icon-moon">🌙</span>
+  </button>
 </header>
 
 <div class="progress-track" id="progress-track" title="Drag to jump between hadiths">
@@ -7234,6 +7355,22 @@ I said to them: 'You have shown me much tonight; now tell me what I saw.' They s
   track.addEventListener('touchstart', e => { dragging = true; seek(e); }, { passive: true });
   window.addEventListener('touchmove', e => { if (dragging) seek(e); }, { passive: true });
   window.addEventListener('touchend', () => { dragging = false; });
+
+  // Dark mode toggle (sun/moon) — persists via localStorage
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeColorMeta = document.getElementById('theme-color-meta');
+  const baseTitle = 'مشكاة المصابيح — مذاكرة';
+  function applyDarkMode(on) {
+    document.body.classList.toggle('dark-mode', on);
+    if (themeColorMeta) themeColorMeta.setAttribute('content', on ? '#15140f' : '#fdf6e3');
+    document.title = on ? baseTitle + ' (Dark)' : baseTitle;
+  }
+  themeToggle.addEventListener('click', () => {
+    const on = !document.body.classList.contains('dark-mode');
+    applyDarkMode(on);
+    localStorage.setItem('mishkatDarkMode', on ? '1' : '0');
+  });
+  applyDarkMode(localStorage.getItem('mishkatDarkMode') === '1');
 
   applySlideMode(localStorage.getItem('mishkatSlideMode') === '1');
 </script>
