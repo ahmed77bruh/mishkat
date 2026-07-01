@@ -401,30 +401,25 @@
   .switch input:checked + .slider { background: var(--green); }
   .switch input:checked + .slider::before { transform: translateX(17px); }
 
-  @keyframes slideCardIn {
-    from { opacity: 0; transform: translateY(14px) scale(0.98); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-  }
-
+  /* Slide View: every hadith is stacked as its own page, one after another —
+     no buttons, just scroll (or drag the scrubber) through all of them. */
   body.slide-mode { background: #4a4a44; }
+  body.slide-mode .nav-bar { display: none; }
+  body.slide-mode .progress-track { position: sticky; top: 0; z-index: 55; }
   body.slide-mode main {
     max-width: none;
     width: 100%;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
+    display: block;
     padding: 30px 16px 90px;
   }
-  body.slide-mode .hadith-entry.active {
+  body.slide-mode .hadith-entry {
+    display: block !important;
     background: var(--card);
     width: 100%;
     max-width: 720px;
-    height: calc(100vh - 210px);
-    min-height: 320px;
-    overflow-y: auto;
+    margin: 0 auto 32px;
     border-radius: 5px;
-    box-shadow: 0 14px 44px rgba(0,0,0,0.5);
-    animation: slideCardIn 0.3s ease;
+    box-shadow: 0 10px 34px rgba(0,0,0,0.45);
   }
   body.slide-mode .kitab-text { font-size: 1.85rem; }
   body.slide-mode .bab-text { font-size: 1.3rem; }
@@ -435,7 +430,6 @@
   body.slide-mode .meanings-list li { font-size: 1.05rem; }
 
   @media (max-width: 640px) {
-    body.slide-mode .hadith-entry.active { height: calc(100vh - 230px); }
     .mode-toggle span { display: none; }
     .mode-toggle { padding: 8px; }
   }
@@ -6912,16 +6906,14 @@ I said to them: 'You have shown me much tonight; now tell me what I saw.' They s
   const fill = document.getElementById('progress-fill');
   const knob = document.getElementById('progress-knob');
 
-  // Slide View: the current hadith is shown as one tall "page" card (all of its
-  // blocks — kitab/matn, translation, notes, meanings, xref — stacked as normal)
-  // that simply scrolls if it's taller than the screen, like flipping through a
-  // PDF page. The prev/next buttons are disabled while it's on; move between
-  // hadiths via the progress bar, an .hlink cross-ref, or by turning it off.
+  // Slide View: ALL hadiths are stacked as their own page, one after another —
+  // no buttons at all (the nav-bar is hidden via CSS); you move through them by
+  // scrolling, or by dragging the progress bar / clicking an .hlink cross-ref,
+  // both of which scroll the target hadith into view.
   let slideMode = false;
 
   function render() {
     entries.forEach((e, i) => e.classList.toggle('active', i === current));
-    if (entries[current]) entries[current].scrollTop = 0;
     document.getElementById('btn-prev').disabled = slideMode || current === 0;
     document.getElementById('btn-next').disabled = slideMode || current === entries.length - 1;
     const num = entries[current] ? entries[current].dataset.num : '';
@@ -6949,7 +6941,10 @@ I said to them: 'You have shown me much tonight; now tell me what I saw.' They s
       if (n) { n.textContent = 'حديث ' + num + ' — not added yet'; setTimeout(() => render(), 1500); }
       return;
     }
-    current = idx; render(); window.scrollTo(0, 0);
+    current = idx;
+    render();
+    if (slideMode) entries[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else window.scrollTo(0, 0);
   }
   window.gotoHadith = gotoHadith;
 
@@ -6960,11 +6955,34 @@ I said to them: 'You have shown me much tonight; now tell me what I saw.' They s
     document.body.classList.toggle('slide-mode', on);
     slideToggle.checked = on;
     render();
+    if (on) entries[current].scrollIntoView({ block: 'start' });
+    else window.scrollTo(0, 0);
   }
   slideToggle.addEventListener('change', () => {
     applySlideMode(slideToggle.checked);
     localStorage.setItem('mishkatSlideMode', slideToggle.checked ? '1' : '0');
   });
+
+  // While scrolling in Slide View, keep the progress bar in sync with whichever
+  // hadith is currently at the top of the viewport.
+  let scrollTicking = false;
+  function syncProgressFromScroll() {
+    if (!slideMode) return;
+    const scrollPos = window.scrollY + 140;
+    let idx = 0;
+    for (let i = 0; i < entries.length; i++) {
+      if (entries[i].offsetTop <= scrollPos) idx = i; else break;
+    }
+    current = idx;
+    const pct = entries.length > 1 ? (current / (entries.length - 1)) * 100 : 0;
+    fill.style.width = pct + '%';
+    knob.style.left = pct + '%';
+  }
+  window.addEventListener('scroll', () => {
+    if (!slideMode || scrollTicking) return;
+    scrollTicking = true;
+    requestAnimationFrame(() => { syncProgressFromScroll(); scrollTicking = false; });
+  }, { passive: true });
 
   // Scrubbing: click or drag the progress bar to jump to any hadith
   let dragging = false;
@@ -6973,6 +6991,7 @@ I said to them: 'You have shown me much tonight; now tell me what I saw.' They s
     const clientX = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
     const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     const idx = Math.round(ratio * (entries.length - 1));
+    if (slideMode) { entries[idx].scrollIntoView({ block: 'start' }); return; }
     if (idx !== current) { current = idx; render(); }
   }
   track.addEventListener('mousedown', e => { dragging = true; seek(e); e.preventDefault(); });
